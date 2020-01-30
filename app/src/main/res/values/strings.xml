@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Larynx app</string>
+    <string name="title_home">Accueil</string>
+    <string name="title_history">Historique</string>
+    <string name="title_evolution">Suivi</string>
+    <string name="button_mic">micro</string>
+    <string name="font_mic">font of the mic</string>
+    <string name="textview">TextView</string>
+</resources>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="?attr/actionBarSize">
+
+    <Button
+        android:id="@+id/reset_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/ic_replay_black_24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.5
+"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/mic_button"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <ImageView
+        android:id="@+id/mic_button"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:background="@drawable/mic_button"
+        android:contentDescription="@string/font_mic"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/mic_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/ic_mic"
+        android:contentDescription="@string/font_mic"
+        app:layout_constraintBottom_toBottomOf="@id/mic_button"
+        app:layout_constraintLeft_toLeftOf="@id/mic_button"
+        app:layout_constraintRight_toRightOf="@id/mic_button"
+        app:layout_constraintTop_toTopOf="@id/mic_button" />
+
+    <ProgressBar
+        android:id="@+id/progressBar_mic"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="128dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.5
+"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/mic_button"
+        app:layout_constraintVertical_bias="0.0" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
