@@ -160,4 +160,10 @@ public class Record {
 	public void setF0(double f0) {
 		this.f0 = f0;
 	}
+
+	/**
+	 * Tostring method
+	 */
+	@Override
+	public String toString() { return name;}
 }

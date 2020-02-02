@@ -1,30 +1,23 @@
 package fr.polytech.larynxapp.ui.history;
 
-import android.app.Activity;
-import android.app.LauncherActivity;
-import android.content.Intent;
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
 
-import fr.polytech.larynxapp.MainActivity;
 import fr.polytech.larynxapp.R;
+import fr.polytech.larynxapp.model.Record;
+import fr.polytech.larynxapp.model.database.DBManager;
+
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -34,8 +27,10 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class HistoryFragment extends Fragment {
+
 
     /**
      * The line chart where the data will be shown
@@ -43,19 +38,26 @@ public class HistoryFragment extends Fragment {
     private LineChart mpLineChart;
 
     /**
-     * The list of the data
+     * The UI list of the data
      */
     private ListView listview;
 
     /**
-     * The list of the data's dates
+     * The list of record datas
      */
+    private List<Record> records;
+
+
+
+    /**
+     * The list of the data's dates
+     *//*
     private String[] dates = new String[]{
             "01/01/2020", "02/01/2020", "03/01/2020", "04/01/2020", "05/01/2020", "06/01/2020",
             "07/01/2020", "08/01/2020", "09/01/2020", "10/01/2020", "11/01/2020", "12/01/2020",
     };
-
-    /**
+    */
+    /*/**
      * The map where the data will be associated with the dates
      */
     private HashMap<String, float[]> listMap = new HashMap<>();
@@ -63,15 +65,14 @@ public class HistoryFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-
         View root = inflater.inflate(R.layout.fragment_history, container, false);      //Sets the view the the fragment
         initMap();
 
         //********************************Creation of the line chart*******************************/
         mpLineChart = root.findViewById(R.id.line_chart);
         final ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-        if(dates != null ){
-            LineDataSet lineDataSet = new LineDataSet(dataValues(listMap.get(dates[0])),"Data Set 1");
+        if(!records.isEmpty() ){
+            LineDataSet lineDataSet = new LineDataSet(dataValues(records.get(0)), records.get(0).getName());
             setLineData(lineDataSet);
             dataSets.add((lineDataSet));
             final LineData data = new LineData(dataSets);
@@ -81,17 +82,18 @@ public class HistoryFragment extends Fragment {
 
 
         //***********************************Création of the list**********************************/
-        listview = root.findViewById(R.id.listView1);
-        final ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity().getApplicationContext(),
-                android.R.layout.simple_list_item_1, dates);
+        listview = root.findViewById(R.id.listViewRecords);
+        final ArrayAdapter<Record> adapter = new ArrayAdapter<Record>(getActivity().getApplicationContext(),
+                android.R.layout.simple_list_item_1, records);
         listview.setAdapter(adapter);
 
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {                     //Sets the action on a line click
+            @SuppressLint("ResourceAsColor")
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 dataSets.clear();
-                LineDataSet tmpLineDataSet = new LineDataSet(dataValues(listMap.get(dates[position])), dates[position]);
+                LineDataSet tmpLineDataSet = new LineDataSet(dataValues(records.get(position)), records.get(position).getName());
                 setLineData(tmpLineDataSet);
                 dataSets.add(tmpLineDataSet);
                 final LineData data = new LineData(dataSets);
@@ -120,12 +122,12 @@ public class HistoryFragment extends Fragment {
 
     /**
      * Sets the data that will be shown in the chart
-     * @param vals the shimmer and the jitter of a data
+     * @param recordIn the record that contain shimmer and jitter data
      * @return the array list that will be shown
      */
-    private ArrayList<Entry> dataValues(float[] vals){
+    private ArrayList<Entry> dataValues(Record recordIn){
         ArrayList<Entry> dataVals = new ArrayList<>();
-        dataVals.add(new Entry(vals[0],vals[1]));
+        dataVals.add(new Entry((float)recordIn.getJitter(), (float)recordIn.getShimmer()));
 
         return dataVals;
     }
@@ -134,10 +136,7 @@ public class HistoryFragment extends Fragment {
      *  Initialisation of the data's map, should be completed and link to the data base
      */
     private void initMap(){
-        float tmpfTab[][]= {{0.64f, 0.32f},{0.54f,0.87f},{0.32f,0.96f},{0.51f,0.63f},{1.13f,0.45f},{1.1f,0.5f},{1.13f,0.36f},{0.39f,0.68f},{0.8f,0.81f},{0.65f,0.74f},{0.63f,1.05f},{0.36f,0.66f}};
-        for(int i =0; i<12; i++){
-            listMap.put(dates[i],tmpfTab[i]);
-        }
+        records = new DBManager(getContext()).query();
     }
 
     /**

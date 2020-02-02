@@ -1,16 +1,23 @@
 package fr.polytech.larynxapp.ui.evolution;
 
+import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import fr.polytech.larynxapp.MainActivity;
 import fr.polytech.larynxapp.R;
+import fr.polytech.larynxapp.model.Record;
+import fr.polytech.larynxapp.model.database.DBManager;
+
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -19,7 +26,12 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 public class EvolutionFragment extends Fragment {
 
@@ -33,12 +45,54 @@ public class EvolutionFragment extends Fragment {
      */
     private LineChart jitterMpLineChart;
 
+    /**
+     * The list of record datas
+     */
+    private List<Record> records;
+
+    /**
+     * The startDate Button
+     */
+    private ImageButton startDateButton;
+
+
+    /**
+     * The endDate Button
+     */
+    private ImageButton endDateButton;
+
+    /**
+     * The startDate
+     */
+    private int startDateDay;
+    private int startDateMonth;
+    private int startDateYear;
+
+    /**
+     * The endDate
+     */
+    private int endDateDay;
+    private int endDateMonth;
+    private int endDateYear;
+
+    /**
+     * The datePicker
+     */
+    private DatePicker datePicker;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
         View root = inflater.inflate(R.layout.fragment_evolution, container, false);    //Sets the view the the fragment
 
+
+        records = new DBManager(getContext()).query();
+
+        startDateButton = root.findViewById(R.id.startDate);
+        endDateButton = root.findViewById(R.id.endDate);
+
+        initDateButton();
         //******************************Creation of the shimmer's chart*****************************/
         final TextView shimmerTextView = root.findViewById(R.id.shimmer_text_view);
         shimmerTextView.setText("Shimmer");
@@ -68,7 +122,7 @@ public class EvolutionFragment extends Fragment {
 
         //******************************Creation of the jitter's chart******************************/
         final TextView jitterTextView = root.findViewById(R.id.jitter_text_view);
-        jitterTextView.setText("jitter");
+        jitterTextView.setText("Jitter");
         jitterTextView.setTextSize(20f);
 
         jitterMpLineChart = root.findViewById(R.id.jitter_line_chart);
@@ -99,11 +153,9 @@ public class EvolutionFragment extends Fragment {
      */
     private ArrayList<Entry> shimmerDataValues1(){
         ArrayList<Entry> dataVals = new ArrayList<>();
-        dataVals.add(new Entry(1,0.5f));
-        dataVals.add(new Entry(2,1f));
-        dataVals.add(new Entry(3,0.75f));
-        dataVals.add(new Entry(4,0.80f));
-
+        for(int i = 0; i < records.size(); i++) {
+            dataVals.add(new Entry(i+1, (float) records.get(i).getShimmer()));
+        }
         return dataVals;
     }
 
@@ -113,10 +165,9 @@ public class EvolutionFragment extends Fragment {
      */
     private ArrayList<Entry> jitterDataValues(){
         ArrayList<Entry> dataVals = new ArrayList<>();
-        dataVals.add(new Entry(1,0.9f));
-        dataVals.add(new Entry(2,0.5f));
-        dataVals.add(new Entry(3,0.6f));
-        dataVals.add(new Entry(4,0.23f));
+        for(int i = 0; i < records.size(); i++) {
+            dataVals.add(new Entry(i+1, (float) records.get(i).getJitter()));
+        }
         return dataVals;
     }
 
@@ -146,5 +197,47 @@ public class EvolutionFragment extends Fragment {
 
         chart.getLegend().setEnabled(false);
         chart.getDescription().setEnabled(false);
+    }
+
+    private void initDateButton() {
+        startDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Calendar calendar = Calendar.getInstance();
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH);
+                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+                DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(),
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                                startDateYear = year;
+                                startDateMonth = month + 1;
+                                startDateDay = day;
+                            }
+                        }, year, month, dayOfMonth);
+                datePickerDialog.show();
+            }
+        });
+
+        endDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Calendar calendar = Calendar.getInstance();
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH);
+                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+                DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(),
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                                endDateYear = year;
+                                endDateMonth = month + 1;
+                                endDateDay = day;
+                            }
+                        }, year, month, dayOfMonth);
+                datePickerDialog.show();
+            }
+        });
     }
 }
