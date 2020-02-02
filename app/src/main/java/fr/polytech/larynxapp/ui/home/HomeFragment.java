@@ -36,14 +36,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.io.TarsosDSPAudioFormat;
-import be.tarsos.dsp.io.android.AndroidAudioInputStream;
-import be.tarsos.dsp.pitch.PitchProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
 import fr.polytech.larynxapp.model.analysis.FeaturesCalculator;
-import fr.polytech.larynxapp.model.analysis.PitchDetection;
 import fr.polytech.larynxapp.model.audio.AudioCapturer;
 import fr.polytech.larynxapp.model.audio.AudioData;
 import fr.polytech.larynxapp.model.audio.AudioPlayer;
