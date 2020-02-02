@@ -6,6 +6,9 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,9 +36,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.io.TarsosDSPAudioFormat;
+import be.tarsos.dsp.io.android.AndroidAudioInputStream;
+import be.tarsos.dsp.pitch.PitchProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
 import fr.polytech.larynxapp.model.analysis.FeaturesCalculator;
+import fr.polytech.larynxapp.model.analysis.PitchDetection;
 import fr.polytech.larynxapp.model.audio.AudioCapturer;
 import fr.polytech.larynxapp.model.audio.AudioData;
 import fr.polytech.larynxapp.model.audio.AudioPlayer;
@@ -202,7 +210,6 @@ public class HomeFragment extends Fragment {
                         updateView(Status_mic.RECORDING);
                     }
                 });
-
                 button_restart.setVisibility(View.GONE);
                 break;
 
@@ -240,8 +247,8 @@ public class HomeFragment extends Fragment {
                     public void onClick(View v) {
                         save();
                         createRecordingNotification();
-                        analyseData();
-                        manager.updateRecordVoiceFeatures(fileName, jitter, shimmer, f0);
+                        //analyseData();
+                        //manager.updateRecordVoiceFeatures(fileName, jitter, shimmer, f0);
                         updateView(Status_mic.DEFAULT);
                     }
                 });
@@ -291,6 +298,7 @@ public class HomeFragment extends Fragment {
                 }
             }).start();
         }
+
     }
 
     private void stopRecording() {
@@ -398,8 +406,8 @@ public class HomeFragment extends Fragment {
      * @param name
      * @param filePath
      */
-    public void addRecordDB(String name, String filePath ) {
-        Record record = new Record( name, filePath );
+    public void addRecordDB(String name, String filePath) {
+        Record record = new Record( name, filePath);
         manager.add( record );
     }
 
@@ -407,7 +415,7 @@ public class HomeFragment extends Fragment {
      * Saves files.
      */
     private void save() {
-        DateFormat dateFormat  = new SimpleDateFormat( "dd_MM_yyyy HH-mm-ss" );
+        DateFormat dateFormat  = new SimpleDateFormat( "YYYY-MM-DD HH:MM:SS" );
         Date currentDate = new Date( System.currentTimeMillis() );
         fileName = dateFormat.format( currentDate );
         String newPath = FILE_PATH + File.separator + fileName + ".wav";

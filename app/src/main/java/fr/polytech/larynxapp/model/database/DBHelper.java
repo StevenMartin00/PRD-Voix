@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+
 /*
   Created by XU Jiaoqiang on 2018/3/20.
  */
@@ -16,7 +17,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	/**
 	 * Constant representing the database's version.
 	 */
-    private static final int DB_VERSION = 1;
+    private static int DB_VERSION = 1;
 	
 	/**
 	 * Constant representing the database's name.
@@ -46,7 +47,6 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // create table Record(Id integer primary key, Name text, Path text)
         String sql = "create table if not exists " + TABLE_NAME +
                 " (Id integer primary key, Name text, Path text, Jitter real, Shimmer real, F0 real)";
         db.execSQL(sql);
@@ -63,6 +63,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         String sql = "DROP TABLE IF EXISTS " + TABLE_NAME;
+        DB_VERSION = newVersion;
         db.execSQL(sql);
         onCreate(db);
     }
