@@ -58,4 +58,20 @@
         app:layout_constraintTop_toBottomOf="@id/mic_button"
         app:layout_constraintVertical_bias="0.0" />
 
+    <TextView
+        android:id="@+id/hint_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="177dp"
+        android:layout_marginLeft="177dp"
+        android:layout_marginTop="116dp"
+        android:layout_marginEnd="176dp"
+        android:layout_marginRight="176dp"
+        android:layout_marginBottom="364dp"
+        android:text="Pour commencer un enregistrement, appuyez sur le micro"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/reset_button" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -90,8 +90,11 @@ public class FeaturesCalculator {
 	 * The actual YIN threshold.
 	 */
 	private double threshold;
-	
-	
+
+	/**
+	 * The result of the pitch detection iteration.
+	 */
+	private PitchDetection pd;
 	
 	/**
 	 * FeaturesCalculator sole builder.
@@ -108,7 +111,6 @@ public class FeaturesCalculator {
 
 
 //		calculatePositions();
-		//TODO: ici ça merde
 		initPeriodsSearch();
 
 //		calculatePeriods();
@@ -834,7 +836,50 @@ public class FeaturesCalculator {
 		f0 = periodToHz( periodRef );
 	}
 
-	/*private void difference_function(AudioData audioData)
+	/**
+	 * The main flow of the YIN algorithm. Returns a pitch value in Hz or -1 if
+	 * no pitch is detected.
+	 *
+	 * @return a pitch value in Hz or -1 if no pitch is detected.
+	 */
+	/*public PitchDetection getPitch(AudioData audioData) {
+
+		final int tauEstimate;
+		final float pitchInHertz;
+
+		// step 2
+		difference_function(audioData);
+
+		// step 3
+		cumulativeMeanNormalizedDifference();
+
+		// step 4
+		tauEstimate = absoluteThreshold();
+
+		// step 5
+		if (tauEstimate != -1) {
+			final float betterTau = parabolicInterpolation(tauEstimate);
+
+			// step 6
+			// TODO Implement optimization for the AUBIO_YIN algorithm.
+			// 0.77% => 0.5% error rate,
+			// using the data of the YIN paper
+			// bestLocalEstimate()
+
+			// conversion to Hz
+			pitchInHertz = sampleRate / betterTau;
+		} else{
+			// no pitch found
+			pitchInHertz = -1;
+		}
+
+		pd.setPitch(pitchInHertz);
+
+		return pd;
+	}
+
+
+	private void difference_function(AudioData audioData)
 	{
 		int index, tau;
 		float delta;
@@ -876,7 +921,16 @@ public class FeaturesCalculator {
 				{
 					tau++;
 				}
-
+				// found tau, exit loop and return
+				// store the probability
+				// From the YIN paper: The threshold determines the list of
+				// candidates admitted to the set, and can be interpreted as the
+				// proportion of aperiodic power tolerated
+				// within a periodic signal.
+				//
+				// Since we want the periodicity and and not aperiodicity:
+				// periodicity = 1 - aperiodicity
+				pd.setProbability(1 - yinBuffer.get(tau));
 				break;
 			}
 		}
@@ -884,11 +938,12 @@ public class FeaturesCalculator {
 		if(tau == yinBuffer.size() || yinBuffer.get(tau) >= threshold)
 		{
 			tau = -1;
-
+			pd.setProbability(0);
+			pd.setPitched(false);
 		}
 		else
 		{
-
+			pd.setPitched(true);
 		}
 
 		return tau;
@@ -932,6 +987,4 @@ public class FeaturesCalculator {
 		}
 		return betterTau;
 	}*/
-
-
 }

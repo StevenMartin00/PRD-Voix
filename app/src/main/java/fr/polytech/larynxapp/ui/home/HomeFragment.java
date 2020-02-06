@@ -6,19 +6,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -26,22 +23,24 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.AudioProcessor;
+import be.tarsos.dsp.io.android.AudioDispatcherFactory;
+import be.tarsos.dsp.pitch.PitchDetectionHandler;
+import be.tarsos.dsp.pitch.PitchDetectionResult;
+import be.tarsos.dsp.pitch.PitchProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
-import fr.polytech.larynxapp.model.analysis.FeaturesCalculator;
 import fr.polytech.larynxapp.model.audio.AudioCapturer;
 import fr.polytech.larynxapp.model.audio.AudioData;
-import fr.polytech.larynxapp.model.audio.AudioPlayer;
+import fr.polytech.larynxapp.model.audio.MyAudioDispatcherFactory;
 import fr.polytech.larynxapp.model.database.DBManager;
 
 public class HomeFragment extends Fragment {
@@ -67,6 +66,11 @@ public class HomeFragment extends Fragment {
     private ImageView icon_mic;
 
     /**
+     * The small text introducing how to use the app on start
+     */
+    private TextView hint_tv;
+
+    /**
      *  Show the advancment of the recording
      */
     private ProgressBar progressBar;
@@ -83,30 +87,9 @@ public class HomeFragment extends Fragment {
             .getPath() + File.separator + "voiceRecords";
 
     /**
-     * The recording status value.
-     */
-    private static final int    STAT_START_RECORD             = 0;
-
-    /**
-     * The recording's end's status value.
-     */
-    private static final int    STAT_STOP_RECORD              = 1;
-
-    /**
      * The permission request's code.
      */
     private static final int    MY_PERMISSIONS_REQUEST_NUMBER = 1;
-
-    /**
-     * The default storage path of the records.
-     */
-    private static final String DEFAULT_PATH = Environment.getExternalStorageDirectory()
-            .getPath() + "/voiceRecords/New Record.wav";
-
-    /**
-     * The audio player that control the listening of the record.
-     */
-    private AudioPlayer audioPlayer;
 
     /**
      * The record's data to analysis.
@@ -143,24 +126,14 @@ public class HomeFragment extends Fragment {
     List<String> mPermissionList = new ArrayList<>();
 
     /**
-     * The path used to open the file.
-     */
-    private String pathFinal;
-
-    /**
      * The record thread that runs the recording.
      */
     private RecordThread recordThread;
 
     /**
-     * The audio capturer that records audio from mic
-     */
-    private AudioCapturer audioCapturer;
-
-    /**
      * Boolean that verify the permissions.
      */
-    private boolean      granted      = false;
+    private boolean granted = false;
 
     /**
      * The data base manager.
@@ -189,7 +162,7 @@ public class HomeFragment extends Fragment {
         icon_mic = root.findViewById(R.id.mic_icon);
         status_mic_button = Status_mic.DEFAULT;
         progressBar = root.findViewById(R.id.progressBar_mic);
-
+        hint_tv = root.findViewById(R.id.hint_tv);
         updateView();
 
         return root;
@@ -202,7 +175,11 @@ public class HomeFragment extends Fragment {
                 icon_mic.setBackgroundResource(R.drawable.ic_mic);
                 button_mic.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
-                        updateView(Status_mic.RECORDING);
+                        List<Record> records = manager.query();
+                        for(Record record : records)
+                            System.out.println(record.getName() + " " + record.getPath() + " " + record.getJitter() + " " + record.getShimmer() + " " + record.getF0());
+                        System.out.println(manager.deleteByName("Record Test"));
+                        //updateView(Status_mic.RECORDING);
                     }
                 });
                 button_restart.setVisibility(View.GONE);
@@ -266,7 +243,51 @@ public class HomeFragment extends Fragment {
                 folder.mkdirs();
             }
 
+            MyAudioDispatcherFactory myAudioDispatcherFactory = new MyAudioDispatcherFactory();
+            final AudioDispatcher dispatcher = myAudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+            PitchDetectionHandler pdh = new PitchDetectionHandler() {
+                @Override
+                public void handlePitch(PitchDetectionResult pitchDetectionResult, AudioEvent audioEvent) {
+                    final float pitchInHz = pitchDetectionResult.getPitch();
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            hint_tv.setText(String.valueOf(pitchInHz));
+                        }
+                    });
+
+                }
+            };
+            AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 22050, 1024, pdh);
+            dispatcher.addAudioProcessor(pitchProcessor);
+            //dispatcher.run();
             new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    long startTime = System.nanoTime();
+                    long endTime = System.nanoTime();
+                    final Thread audioThread = new Thread(dispatcher, "Audio Thread");
+                    audioThread.start();
+                    while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
+                        progressBar.setProgress( Math.round((endTime - startTime)/50000000f));
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        endTime = System.nanoTime();
+                    }
+                    if(endTime - startTime >= 5000000000L) {
+                        getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                updateView(Status_mic.FINISH);
+                            }
+                        });
+                    }
+                }
+            }).start();
+
+            /*new Thread(new Runnable() {
                 @Override
                 public void run() {
                     long startTime = System.nanoTime();
@@ -291,7 +312,7 @@ public class HomeFragment extends Fragment {
                         });
                     }
                 }
-            }).start();
+            }).start();*/
         }
 
     }
@@ -426,7 +447,7 @@ public class HomeFragment extends Fragment {
      */
     private void analyseData() {
 
-        new Thread(new Runnable() {
+        /*new Thread(new Runnable() {
             @Override
             public void run() {
                 audioData = new AudioData();
@@ -473,9 +494,9 @@ public class HomeFragment extends Fragment {
                 audioData.processData();
 
                 //TEST DATA
-                /*shimmer = 14.6;
+                shimmer = 14.6;
                 jitter = 5.2;
-                f0 = 250;*/
+                f0 = 250;
 
                 FeaturesCalculator featuresCalculator = new FeaturesCalculator(audioData);
 
@@ -483,7 +504,7 @@ public class HomeFragment extends Fragment {
                 jitter = featuresCalculator.getJitter();
                 f0 = featuresCalculator.getF0();
             }
-        }).start();
+        }).start();*/
     }
 
     /**

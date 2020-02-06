@@ -56,32 +56,62 @@ public class DBManager {
 	 * Add the record into dataBase.
 	 *
 	 * @param record the record to add
+	 * @return true if the record is added else return false
 	 */
-	public void add(Record record) {
-		
+	public boolean add(Record record) {
+
+		boolean isAdded;
 		db.beginTransaction();
-		// Create a new map of values, where column names are the keys
-		ContentValues values = new ContentValues();
-		values.put( "Name", record.getName() );
-		values.put( "Path", record.getPath() );
-		values.put( "Jitter", record.getJitter() );
-		values.put( "Shimmer", record.getShimmer() );
-		values.put( "F0", record.getF0() );
-		
-		db.insertOrThrow( TABLE_NAME, null, values );
-		db.setTransactionSuccessful();
-		db.endTransaction();
+		try
+		{
+			// Create a new map of values, where column names are the keys
+			ContentValues values = new ContentValues();
+			values.put("Name", record.getName());
+			values.put("Path", record.getPath());
+			values.put("Jitter", record.getJitter());
+			values.put("Shimmer", record.getShimmer());
+			values.put("F0", record.getF0());
+
+			db.insertOrThrow(TABLE_NAME, null, values);
+			db.setTransactionSuccessful();
+			isAdded = true;
+		}
+		catch(Exception e)
+		{
+			isAdded = false;
+		}
+		finally
+		{
+			db.endTransaction();
+		}
+		return isAdded;
 	}
 	
 	/**
 	 * Delete the record of the given name from the dataBase.
 	 *
 	 * @param name the name of the record to delete
+	 * @return true is the record is deleted else return false
 	 */
-	public void deleteByName( String name ) {
-		String whereClauses = "Name=?";
-		String[] whereArgs    = { name };
-		db.delete( TABLE_NAME, whereClauses, whereArgs );
+	public boolean deleteByName( String name )
+	{
+		boolean isDeleted;
+		db.beginTransaction();
+		try
+		{
+			db.execSQL("DELETE FROM " + TABLE_NAME + " WHERE Name like '" + name + "'");
+			db.setTransactionSuccessful();
+			isDeleted = true;
+		}
+		catch(Exception e)
+		{
+			isDeleted = false;
+		}
+		finally
+		{
+			db.endTransaction();
+		}
+		return isDeleted;
 	}
 
 
@@ -132,11 +162,27 @@ public class DBManager {
 	 * @param jitter
 	 * @param shimmer
 	 * @param f0
+	 * @return true if record is updated with voice features else return false
 	 */
-	public void updateRecordVoiceFeatures(String name, double jitter, double shimmer, double f0)
+	public boolean updateRecordVoiceFeatures(String name, double jitter, double shimmer, double f0)
 	{
-		String sql = "UPDATE Voices SET Jitter = " + jitter + ", Shimmer = " + shimmer + ", F0 = " + f0 + " WHERE Name like '" + name + "'";
-		db.execSQL("UPDATE Voices SET Jitter = " + jitter + ", Shimmer = " + shimmer + ", F0 = " + f0 + " WHERE Name like '" + name + "'");
+		db.beginTransaction();
+		boolean isUpdated;
+		try
+		{
+			db.execSQL("UPDATE Voices SET Jitter = " + jitter + ", Shimmer = " + shimmer + ", F0 = " + f0 + " WHERE Name like '" + name + "'");
+			db.setTransactionSuccessful();
+			isUpdated = true;
+		}
+		catch(Exception e)
+		{
+			isUpdated = false;
+		}
+		finally
+		{
+			db.endTransaction();
+		}
+		return isUpdated;
 	}
 
 	/**
@@ -146,5 +192,17 @@ public class DBManager {
 	 */
 	private Cursor queryTheCursor() {
 		return db.rawQuery( "SELECT * FROM Voices", null );
+	}
+
+	/**
+	 * Checks if the database is empty or not
+	 * @return true if database is empty, false otherwise
+	 */
+	public boolean isDatabaseEmpty()
+	{
+		Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
+		boolean isEmpty;
+		isEmpty = !cursor.moveToFirst();
+		return isEmpty;
 	}
 }
