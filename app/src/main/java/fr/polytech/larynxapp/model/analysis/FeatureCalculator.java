@@ -90,7 +90,8 @@ public class FeatureCalculator
         int periodBeginning     = 0;
 
         //search each periods maxima
-        for ( int period = 0; period < periods.size() - 1; period++ ) {
+        for ( int period = 0; period < periods.size(); period++ ) //periods.size() - 1
+        {
             periodMaxPitch = 0;
 
             //search a maximum
@@ -117,7 +118,8 @@ public class FeatureCalculator
         double numberOfPeriods = periods.size();   //set as double for double division
 
         // JITTER FORMULA (LOCAL)
-        for ( int i = 0; i < periods.size() - 1; i++ ) {
+        for ( int i = 0; i < periods.size() - 1; i++ ) //TODO: test with periods.size()
+        {
             sumOfDifferenceOfPeriods += Math.abs( periods.get( i ) - periods.get( i + 1 ) );
             sumOfPeriods += periods.get( i );
         }
@@ -145,7 +147,8 @@ public class FeatureCalculator
         long A_sum = 0; // sum of all the peak-to-peak amplitudes
         List<Integer> ampPk2Pk   = new ArrayList<>(); // this list contains all the peak-to-peak amplitudes
 
-        for ( int i = 0; i < pitchesPositions.size() - 1; i++ ) {
+        for ( int i = 0; i < pitchesPositions.size() - 1; i++ ) //TODO: test with pitchesPositions.size()
+        {
             // get each pitch
             maxAmp = data.get( pitchesPositions.get( i ) );
             for ( int j = pitchesPositions.get( i ); j < pitchesPositions.get( i + 1 ); j++ ) {
