@@ -1,16 +1,21 @@
 package fr.polytech.larynxapp.model.database;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import fr.polytech.larynxapp.model.Record;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
 public class DBManagerTest {
 
     private DBManager dbManager;
@@ -18,7 +23,7 @@ public class DBManagerTest {
     @Before
     public void setup()
     {
-        dbManager = new DBManager(InstrumentationRegistry.getInstrumentation().getTargetContext());
+        dbManager = new DBManager(ApplicationProvider.getApplicationContext());
     }
 
     @After
@@ -47,29 +52,36 @@ public class DBManagerTest {
     public void getRecord()
     {
         Record record = new Record("Record Test", "Path Test", 0, 0, 0);
+        dbManager.add(record);
         Record recordToTest = dbManager.getRecord("Record Test");
         assertEquals(recordToTest.getName(), record.getName());
         assertEquals(recordToTest.getPath(), record.getPath());
         assertEquals(recordToTest.getJitter(), record.getJitter(), 0.001);
         assertEquals(recordToTest.getShimmer(), record.getShimmer(), 0.001);
         assertEquals(recordToTest.getF0(), record.getF0(), 0.001);
-     }
+    }
 
     @Test
     public void updateRecordVoiceFeatures()
     {
-        String name = "Record Test";
+        Record recordToUpdate = new Record("Record Test", "Record Test Path");
+        dbManager.add(recordToUpdate);
         double jitter = 14.5;
         double shimmer = 5.6;
         double f0 = 185;
-        assertTrue(dbManager.updateRecordVoiceFeatures(name, jitter, shimmer, f0));
+        assertTrue(dbManager.updateRecordVoiceFeatures(recordToUpdate.getName(), jitter, shimmer, f0));
+        Record recordUpdated = dbManager.getRecord(recordToUpdate.getName());
+        assertEquals(jitter, recordUpdated.getJitter(), 0.001);
+        assertEquals(shimmer, recordUpdated.getShimmer(), 0.001);
+        assertEquals(f0, recordUpdated.getF0(), 0.001);
     }
 
     @Test
     public void deleteByName()
     {
-        String name = "Record Test";
-        assertTrue(dbManager.deleteByName(name));
+        Record recordToDelete = new Record("Record Test", "Record Test Path");
+        dbManager.add(recordToDelete);
+        assertTrue(dbManager.deleteByName(recordToDelete.getName()));
     }
 
     @Test
@@ -78,5 +90,7 @@ public class DBManagerTest {
         Record record = new Record("Record Test", "Path Test", 0, 0, 0);
         dbManager.add(record);
         assertFalse(dbManager.isDatabaseEmpty());
+        dbManager.deleteByName(record.getName());
+        assertTrue(dbManager.isDatabaseEmpty());
     }
 }

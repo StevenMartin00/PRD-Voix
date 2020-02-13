@@ -31,7 +31,6 @@ import java.util.List;
 
 public class HistoryFragment extends Fragment {
 
-
     /**
      * The line chart where the data will be shown
      */
@@ -47,17 +46,7 @@ public class HistoryFragment extends Fragment {
      */
     private List<Record> records;
 
-
-
     /**
-     * The list of the data's dates
-     *//*
-    private String[] dates = new String[]{
-            "01/01/2020", "02/01/2020", "03/01/2020", "04/01/2020", "05/01/2020", "06/01/2020",
-            "07/01/2020", "08/01/2020", "09/01/2020", "10/01/2020", "11/01/2020", "12/01/2020",
-    };
-    */
-    /*/**
      * The map where the data will be associated with the dates
      */
     private HashMap<String, float[]> listMap = new HashMap<>();
@@ -65,7 +54,7 @@ public class HistoryFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_history, container, false);      //Sets the view the the fragment
+        View root = inflater.inflate(R.layout.fragment_history, container, false);      //Sets the view for the fragment
         initMap();
 
         //********************************Creation of the line chart*******************************/
@@ -79,11 +68,9 @@ public class HistoryFragment extends Fragment {
             mpLineChart.setData(data);
         }
 
-
-
-        //***********************************Création of the list**********************************/
+        //***********************************Creation of the list**********************************/
         listview = root.findViewById(R.id.listViewRecords);
-        final ArrayAdapter<Record> adapter = new ArrayAdapter<Record>(getActivity().getApplicationContext(),
+        final ArrayAdapter<Record> adapter = new ArrayAdapter<>(getActivity().getApplicationContext(),
                 android.R.layout.simple_list_item_1, records);
         listview.setAdapter(adapter);
 
@@ -98,6 +85,9 @@ public class HistoryFragment extends Fragment {
                 dataSets.add(tmpLineDataSet);
                 final LineData data = new LineData(dataSets);
                 mpLineChart.setData(data);
+                YAxis yAxis = mpLineChart.getAxisLeft();
+                yAxis.setAxisMinimum(0);
+                yAxis.setAxisMaximum(5);
                 mpLineChart.invalidate();
             }
         });
@@ -128,7 +118,6 @@ public class HistoryFragment extends Fragment {
     private ArrayList<Entry> dataValues(Record recordIn){
         ArrayList<Entry> dataVals = new ArrayList<>();
         dataVals.add(new Entry((float)recordIn.getJitter(), (float)recordIn.getShimmer()));
-
         return dataVals;
     }
 

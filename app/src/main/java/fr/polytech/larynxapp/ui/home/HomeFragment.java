@@ -4,25 +4,33 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,15 +40,16 @@ import java.util.List;
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
+import be.tarsos.dsp.io.TarsosDSPAudioFormat;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
+import be.tarsos.dsp.writer.WriterProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
-import fr.polytech.larynxapp.model.audio.AudioCapturer;
+import fr.polytech.larynxapp.model.analysis.FeatureCalculator;
 import fr.polytech.larynxapp.model.audio.AudioData;
-import fr.polytech.larynxapp.model.audio.MyAudioDispatcherFactory;
 import fr.polytech.larynxapp.model.database.DBManager;
 
 public class HomeFragment extends Fragment {
@@ -66,11 +75,6 @@ public class HomeFragment extends Fragment {
     private ImageView icon_mic;
 
     /**
-     * The small text introducing how to use the app on start
-     */
-    private TextView hint_tv;
-
-    /**
      *  Show the advancment of the recording
      */
     private ProgressBar progressBar;
@@ -78,23 +82,17 @@ public class HomeFragment extends Fragment {
     /**
      * The default file name.
      */
-    public static final String FILE_NAME                     = "New Record.wav";
+    public static final String FILE_NAME = "New Record.wav";
 
     /**
      * The storage path of the records.
      */
-    public static final String FILE_PATH                     = Environment.getExternalStorageDirectory()
-            .getPath() + File.separator + "voiceRecords";
+    public static final String FILE_PATH = Environment.getExternalStorageDirectory().getPath() + File.separator + "voiceRecords";
 
     /**
      * The permission request's code.
      */
     private static final int    MY_PERMISSIONS_REQUEST_NUMBER = 1;
-
-    /**
-     * The record's data to analysis.
-     */
-    private AudioData audioData;
 
     /**
      * The shimmer value.
@@ -114,8 +112,7 @@ public class HomeFragment extends Fragment {
     /**
      * The permissions list needed for the recording.
      */
-
-    String[]     permissions     = new String[]{
+    private String[] permissions = new String[]{
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
@@ -123,12 +120,7 @@ public class HomeFragment extends Fragment {
     /**
      * The permissions that still need to be added.
      */
-    List<String> mPermissionList = new ArrayList<>();
-
-    /**
-     * The record thread that runs the recording.
-     */
-    private RecordThread recordThread;
+    private List<String> mPermissionList = new ArrayList<>();
 
     /**
      * Boolean that verify the permissions.
@@ -150,6 +142,27 @@ public class HomeFragment extends Fragment {
      */
     private String fileName;
 
+    /**
+     * List of pitch captured during the record (frequencies used to make the mean frequency and get the mean period)
+     */
+    private List<Float> pitches;
+
+    /**
+     * AudioDispatcher managing the pitch detection and the wav file writing
+     */
+    private AudioDispatcher dispatcher;
+
+    /**
+     * TarsosDSPAudioFormat created to work with AudioDispatcher (see TarsosDSP)
+     */
+    private TarsosDSPAudioFormat tarsosDSPAudioFormat;
+
+    /**
+     * Manages the notifications
+     */
+    private NotificationManager mNotificationManager;
+
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -162,24 +175,36 @@ public class HomeFragment extends Fragment {
         icon_mic = root.findViewById(R.id.mic_icon);
         status_mic_button = Status_mic.DEFAULT;
         progressBar = root.findViewById(R.id.progressBar_mic);
-        hint_tv = root.findViewById(R.id.hint_tv);
+        tarsosDSPAudioFormat=new TarsosDSPAudioFormat(TarsosDSPAudioFormat.Encoding.PCM_SIGNED,
+                44100,
+                2 * 8,
+                1,
+                2,
+                44100,
+                ByteOrder.BIG_ENDIAN.equals(ByteOrder.nativeOrder()));
+        //manager.resetDB();
         updateView();
 
         return root;
     }
 
+    /**
+     * Updates the view depending of the status of the mic button
+     */
     private void updateView() {
         switch (status_mic_button) {
             case DEFAULT:
                 progressBar.setVisibility(View.INVISIBLE);
                 icon_mic.setBackgroundResource(R.drawable.ic_mic);
+                if(!manager.isDatabaseEmpty())
+                {
+                    List<Record> records = manager.query();
+                    for (Record record : records)
+                        System.out.println(record.getName() + " jit: " + record.getJitter() + " shim: " + record.getShimmer() + " f0: " + record.getF0());
+                }
                 button_mic.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
-                        List<Record> records = manager.query();
-                        for(Record record : records)
-                            System.out.println(record.getName() + " " + record.getPath() + " " + record.getJitter() + " " + record.getShimmer() + " " + record.getF0());
-                        System.out.println(manager.deleteByName("Record Test"));
-                        //updateView(Status_mic.RECORDING);
+                        updateView(Status_mic.RECORDING);
                     }
                 });
                 button_restart.setVisibility(View.GONE);
@@ -219,8 +244,8 @@ public class HomeFragment extends Fragment {
                     public void onClick(View v) {
                         save();
                         createRecordingNotification();
-                        //analyseData();
-                        //manager.updateRecordVoiceFeatures(fileName, jitter, shimmer, f0);
+                        analyseData();
+                        manager.updateRecordVoiceFeatures(fileName, jitter, shimmer, f0);
                         updateView(Status_mic.DEFAULT);
                     }
                 });
@@ -233,93 +258,99 @@ public class HomeFragment extends Fragment {
                 });
                 break;
         }
-
     }
 
+    /**
+     * Starts the recording
+     */
     private void startRecording() {
         if ( granted ) {
             File folder = new File(FILE_PATH);
             if (!folder.exists()) {
                 folder.mkdirs();
             }
+            pitches = new ArrayList<>();
 
-            MyAudioDispatcherFactory myAudioDispatcherFactory = new MyAudioDispatcherFactory();
-            final AudioDispatcher dispatcher = myAudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-            PitchDetectionHandler pdh = new PitchDetectionHandler() {
-                @Override
-                public void handlePitch(PitchDetectionResult pitchDetectionResult, AudioEvent audioEvent) {
-                    final float pitchInHz = pitchDetectionResult.getPitch();
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            hint_tv.setText(String.valueOf(pitchInHz));
-                        }
-                    });
+            releaseDispatcher();
+            dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(44100,7168,0);
 
-                }
-            };
-            AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 22050, 1024, pdh);
-            dispatcher.addAudioProcessor(pitchProcessor);
-            //dispatcher.run();
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    long startTime = System.nanoTime();
-                    long endTime = System.nanoTime();
-                    final Thread audioThread = new Thread(dispatcher, "Audio Thread");
-                    audioThread.start();
-                    while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
-                        progressBar.setProgress( Math.round((endTime - startTime)/50000000f));
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        endTime = System.nanoTime();
+            try {
+                File file = new File(FILE_PATH + File.separator + FILE_NAME);
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw");
+                AudioProcessor recordProcessor = new WriterProcessor(tarsosDSPAudioFormat, randomAccessFile);
+                dispatcher.addAudioProcessor(recordProcessor);
+
+                PitchDetectionHandler pitchDetectionHandler = new PitchDetectionHandler() {
+                    @Override
+                    public void handlePitch(PitchDetectionResult res, AudioEvent e){
+                        float pitchInHz = res.getPitch();
+                        if(pitchInHz != -1)
+                            pitches.add(pitchInHz);
                     }
-                    if(endTime - startTime >= 5000000000L) {
-                        getActivity().runOnUiThread(new Runnable() {
-                            public void run() {
-                                updateView(Status_mic.FINISH);
+                };
+
+                AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 44100, 7168, pitchDetectionHandler);
+                dispatcher.addAudioProcessor(pitchProcessor);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long startTime = System.nanoTime();
+                        long endTime = System.nanoTime();
+                        Thread audioThread = new Thread(dispatcher, "Audio Thread");
+                        audioThread.start();
+                        while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
+                            progressBar.setProgress( Math.round((endTime - startTime)/50000000f));
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
-                        });
-                    }
-                }
-            }).start();
-
-            /*new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    long startTime = System.nanoTime();
-                    long endTime = System.nanoTime();
-                    recordThread = new RecordThread();
-                    recordThread.run();
-                    while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
-                        progressBar.setProgress( Math.round((endTime - startTime)/50000000f));
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            endTime = System.nanoTime();
                         }
-                        endTime = System.nanoTime();
+                        if(endTime - startTime >= 5000000000L) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                public void run() {
+                                    stopRecording();
+                                    updateView(Status_mic.FINISH);
+                                }
+                            });
+                        }
                     }
-                    if(endTime - startTime >= 5000000000L) {
-                        getActivity().runOnUiThread(new Runnable() {
-                            public void run() {
-                                recordThread.stop();
-                                updateView(Status_mic.FINISH);
-                            }
-                        });
-                    }
-                }
-            }).start();*/
+                }).start();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
 
-    private void stopRecording() {
+    /**
+     * Stops the recording
+     */
+    private void stopRecording()
+    {
+        releaseDispatcher();
     }
 
+    /**
+     * Releases the audio dispatcher processing the pitch and creating the wav file associated
+     */
+    private void releaseDispatcher()
+    {
+        if(dispatcher != null)
+        {
+            if(!dispatcher.isStopped())
+                dispatcher.stop();
+            dispatcher = null;
+        }
+    }
+
+    /**
+     * Changing the status of the mic button
+     * @param newStatus the new status of the mic button
+     */
     private void updateView(Status_mic newStatus) {
         setStatus_mic_button(newStatus);
         updateView();
@@ -333,21 +364,40 @@ public class HomeFragment extends Fragment {
         this.status_mic_button = status_mic_button;
     }
 
+    /**
+     * OnPause method called when the phone goes in sleep mode
+     */
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onPause()
+    {
+        super.onPause();
     }
 
+    /**
+     * OnStop method called once the app is hidden (back to home or something like that)
+     */
     @Override
     public void onStop() {
         super.onStop();
+    }
+
+    /**
+     * OnDestroy method called after app termination
+     */
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        if(mNotificationManager != null)
+            mNotificationManager.cancelAll();
+        releaseDispatcher();
         manager.closeDB();
     }
 
     /**
      * Check the permissions of the application and request the permissions of the missing ones.
      */
-    public void initPermissions() {
+    private void initPermissions() {
         this.mPermissionList.clear();
         for ( String permission : permissions ) {
             if ( ContextCompat.checkSelfPermission( getActivity(), permission ) != PackageManager.PERMISSION_GRANTED ) {
@@ -430,8 +480,8 @@ public class HomeFragment extends Fragment {
     /**
      * Saves files.
      */
-    private void save() {
-        DateFormat dateFormat  = new SimpleDateFormat( "YYYY-MM-DD HH:MM:SS" );
+    public void save() {
+        DateFormat dateFormat  = new SimpleDateFormat( "dd-MM-yyyy HH-mm-ss" );
         Date currentDate = new Date( System.currentTimeMillis() );
         fileName = dateFormat.format( currentDate );
         String newPath = FILE_PATH + File.separator + fileName + ".wav";
@@ -445,72 +495,60 @@ public class HomeFragment extends Fragment {
     /**
      * Runs the analyse of the data.
      */
-    private void analyseData() {
+    public void analyseData() {
 
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                audioData = new AudioData();
-                boolean fileOK;
+        AudioData audioData = new AudioData();
+        boolean fileOK;
 
-                File file = new File(finalPath);
-                System.out.println("finalPath = " + finalPath);
-                try {
-                    if (!file.exists())
-                        //noinspection ResultOfMethodCallIgnored we don't need the result because we try to create only if the file doesn't exist.
-                        file.createNewFile();
+        File file = new File(finalPath);
+        System.out.println("finalPath = " + finalPath);
+        try {
+            if (!file.exists())
+                //noinspection ResultOfMethodCallIgnored we don't need the result because we try to create only if the file doesn't exist.
+                file.createNewFile();
 
-                    fileOK = true;
-                }
-                catch (IOException e) {
-                    Log.e("AnalyseData", e.getMessage(), e);
-                    fileOK = false;
-                }
+            fileOK = true;
+        }
+        catch (IOException e) {
+            Log.e("AnalyseData", e.getMessage(), e);
+            fileOK = false;
+        }
 
-                if (!fileOK) {
-                    return;
-                }
+        if (!fileOK) {
+            return;
+        }
 
-                try {
-                    FileInputStream inputStream = new FileInputStream(file);
-                    byte[] b = new byte[inputStream.available()];
-                    inputStream.read(b);
-                    short[] s = new short[(b.length - 44) / 2];
-                    ByteBuffer.wrap(b)
-                            .order(ByteOrder.LITTLE_ENDIAN)
-                            .asShortBuffer()
-                            .get(s);
+        try {
+            FileInputStream inputStream = new FileInputStream(file);
+            byte[] b = new byte[inputStream.available()];
+            inputStream.read(b);
+            short[] s = new short[(b.length - 44) / 2];
+            ByteBuffer.wrap(b)
+                    .order(ByteOrder.BIG_ENDIAN)
+                    .asShortBuffer()
+                    .get(s);
 
-                    for (short ss : s) {
-                        audioData.addData(ss);
-                    }
-
-                    audioData.setMaxAmplitudeAbs();
-
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-                audioData.processData();
-
-                //TEST DATA
-                shimmer = 14.6;
-                jitter = 5.2;
-                f0 = 250;
-
-                FeaturesCalculator featuresCalculator = new FeaturesCalculator(audioData);
-
-                shimmer = featuresCalculator.getShimmer();
-                jitter = featuresCalculator.getJitter();
-                f0 = featuresCalculator.getF0();
+            for (short ss : s) {
+                audioData.addData(ss);
             }
-        }).start();*/
+
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        audioData.processData();
+
+        FeatureCalculator featureCalculator = new FeatureCalculator(audioData, pitches);
+
+        shimmer = featureCalculator.getShimmer() * 100;
+        jitter = featureCalculator.getJitter() * 100;
+        f0 = featureCalculator.getF0();
     }
 
     /**
      * Creates a notification about the recording's path
      */
-    private void createRecordingNotification()
+    public void createRecordingNotification()
     {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -525,17 +563,24 @@ public class HomeFragment extends Fragment {
         }
 
         String pathForNotification = finalPath.substring(finalPath.indexOf("voiceRecords/"));
-
+        Intent intent = new Intent();
+        File recordFile = new File(finalPath);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setDataAndType(FileProvider.getUriForFile(this.getActivity(), this.getActivity().getPackageName() + ".provider", recordFile), "audio/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        PendingIntent contentIntent = PendingIntent.getActivity(this.getActivity(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         Notification notification = new NotificationCompat.Builder(this.getActivity(), "LarynxChannel")
-                .setSmallIcon(R.drawable.bouton_micro) //TODO: à changer
+                .setSmallIcon(R.drawable.bouton_micro)
                 .setContentTitle("Fichier enregistré sur : ")
                 .setContentText(pathForNotification)
+                .setContentIntent(contentIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOngoing(false)
                 .build();
 
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
-        NotificationManager mNotificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         mNotificationManager.notify(0, notification);
     }

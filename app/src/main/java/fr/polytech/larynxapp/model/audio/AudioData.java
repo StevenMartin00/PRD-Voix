@@ -27,11 +27,6 @@ public class AudioData {
 	private short       minAmplitude;
 	
 	/**
-	 * The highest absolute amplitude in this audio data.
-	 */
-	private short       maxAmplitudeAbs;
-	
-	/**
 	 * The row audio data list.
 	 */
 	private List<Short> data;
@@ -40,16 +35,6 @@ public class AudioData {
 	 * The data processed list for analysing.
 	 */
 	private List<Short> data_processed;
-
-	/**
-	 * The ratio to remove from beginning of the row data in the processed data.
-	 */
-	private final static double RATIO_BEGINNING = 0.3;   //we remove the first 30%
-	
-	/**
-	 * The ratio to remove from ending of the row data in the processed data.
-	 */
-	private final static double RATIO_ENDING = 0.9;   //we remove the last  10%
 	
 	/**
 	 * AudioData sole and default builder.
@@ -59,7 +44,6 @@ public class AudioData {
 		
 		maxAmplitude = Short.MIN_VALUE;
 		minAmplitude = Short.MAX_VALUE;
-		maxAmplitudeAbs = Short.MIN_VALUE;
 	}
 
 	/**
@@ -78,15 +62,6 @@ public class AudioData {
 	 */
 	public short getMinAmplitude() {
 		return minAmplitude;
-	}
-	
-	/**
-	 * Gets for the highest absolute amplitude.
-	 *
-	 * @return the highest absolute amplitude
-	 */
-	public short getMaxAmplitudeAbs() {
-		return maxAmplitudeAbs;
 	}
 	
 	/**
@@ -158,16 +133,6 @@ public class AudioData {
 		}
 		catch ( Exception e ) {
 			Log.e( "---processData---", Log.getStackTraceString( e ), e );
-		}
-	}
-	
-	/**
-	 * Sets the highest absolute amplitude automatically.
-	 */
-	public void setMaxAmplitudeAbs() {
-		for (short element : data)
-			if ( maxAmplitudeAbs < Math.abs( element ) ) {
-				maxAmplitudeAbs = element;
 		}
 	}
 }

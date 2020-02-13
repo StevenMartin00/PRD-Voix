@@ -162,7 +162,7 @@ public class Record {
 	}
 
 	/**
-	 * Tostring method
+	 * ToString method
 	 */
 	@Override
 	public String toString() { return name;}

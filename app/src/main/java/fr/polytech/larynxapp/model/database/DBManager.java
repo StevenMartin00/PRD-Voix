@@ -205,4 +205,16 @@ public class DBManager {
 		isEmpty = !cursor.moveToFirst();
 		return isEmpty;
 	}
+
+	/**
+	 * Deletes all records from the database
+	 * Used for testing
+	 */
+	public void resetDB()
+	{
+		db.beginTransaction();
+		db.execSQL("DELETE FROM " + TABLE_NAME );
+		db.setTransactionSuccessful();
+		db.endTransaction();
+	}
 }
