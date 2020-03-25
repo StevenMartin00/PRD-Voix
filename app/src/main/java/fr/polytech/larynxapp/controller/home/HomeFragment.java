@@ -1,4 +1,4 @@
-package fr.polytech.larynxapp.ui.home;
+package fr.polytech.larynxapp.controller.home;
 
 import android.Manifest;
 import android.app.Notification;
@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,6 +28,7 @@ import androidx.fragment.app.Fragment;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -48,7 +50,7 @@ import be.tarsos.dsp.pitch.PitchProcessor;
 import be.tarsos.dsp.writer.WriterProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
-import fr.polytech.larynxapp.model.analysis.FeatureCalculator;
+import fr.polytech.larynxapp.model.analysis.FeaturesCalculator;
 import fr.polytech.larynxapp.model.audio.AudioData;
 import fr.polytech.larynxapp.model.database.DBManager;
 
@@ -155,7 +157,7 @@ public class HomeFragment extends Fragment {
     /**
      * TarsosDSPAudioFormat created to work with AudioDispatcher (see TarsosDSP)
      */
-    private TarsosDSPAudioFormat tarsosDSPAudioFormat;
+    private TarsosDSPAudioFormat AUDIO_FORMAT;
 
     /**
      * Manages the notifications
@@ -175,16 +177,30 @@ public class HomeFragment extends Fragment {
         icon_mic = root.findViewById(R.id.mic_icon);
         status_mic_button = Status_mic.DEFAULT;
         progressBar = root.findViewById(R.id.progressBar_mic);
-        tarsosDSPAudioFormat=new TarsosDSPAudioFormat(TarsosDSPAudioFormat.Encoding.PCM_SIGNED,
+        progressBar.getProgressDrawable().setColorFilter(
+                Color.RED, android.graphics.PorterDuff.Mode.SRC_IN);
+        AUDIO_FORMAT = new TarsosDSPAudioFormat(
                 44100,
-                2 * 8,
+                16,
                 1,
-                2,
-                44100,
-                ByteOrder.BIG_ENDIAN.equals(ByteOrder.nativeOrder()));
-        //manager.resetDB();
-        updateView();
+                true,
+                ByteOrder.LITTLE_ENDIAN.equals(ByteOrder.nativeOrder()));
+        manager.resetDB();
+        Record record = new Record();
+        record.setF0(104d);
+        record.setJitter(0.9);
+        record.setShimmer(1.2);
+        record.setName("12-03-2020 15-42-25");
+        manager.add(record);
 
+        Record record2 = new Record();
+        record2.setF0(102d);
+        record2.setJitter(0.7);
+        record2.setShimmer(1.4);
+        record2.setName("18-03-2020 15-42-25");
+        manager.add(record2);
+
+        updateView();
         return root;
     }
 
@@ -240,12 +256,14 @@ public class HomeFragment extends Fragment {
             case FINISH:
                 progressBar.setVisibility(View.INVISIBLE);
                 icon_mic.setBackgroundResource(R.drawable.ic_save_black_24dp);
+
                 button_mic.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         save();
                         createRecordingNotification();
                         analyseData();
                         manager.updateRecordVoiceFeatures(fileName, jitter, shimmer, f0);
+
                         updateView(Status_mic.DEFAULT);
                     }
                 });
@@ -265,65 +283,65 @@ public class HomeFragment extends Fragment {
      */
     private void startRecording() {
         if ( granted ) {
-            File folder = new File(FILE_PATH);
-            if (!folder.exists()) {
+            File folder = new File( FILE_PATH );
+            if ( !folder.exists() ) {
                 folder.mkdirs();
             }
             pitches = new ArrayList<>();
-
             releaseDispatcher();
-            dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(44100,7168,0);
+            dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(44100, 2048, 0);
 
+            File file = new File(FILE_PATH + File.separator + FILE_NAME);
+            RandomAccessFile randomAccessFile = null;
             try {
-                File file = new File(FILE_PATH + File.separator + FILE_NAME);
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw");
-                AudioProcessor recordProcessor = new WriterProcessor(tarsosDSPAudioFormat, randomAccessFile);
-                dispatcher.addAudioProcessor(recordProcessor);
-
-                PitchDetectionHandler pitchDetectionHandler = new PitchDetectionHandler() {
-                    @Override
-                    public void handlePitch(PitchDetectionResult res, AudioEvent e){
-                        float pitchInHz = res.getPitch();
-                        if(pitchInHz != -1)
-                            pitches.add(pitchInHz);
-                    }
-                };
-
-                AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 44100, 7168, pitchDetectionHandler);
-                dispatcher.addAudioProcessor(pitchProcessor);
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        long startTime = System.nanoTime();
-                        long endTime = System.nanoTime();
-                        Thread audioThread = new Thread(dispatcher, "Audio Thread");
-                        audioThread.start();
-                        while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
-                            progressBar.setProgress( Math.round((endTime - startTime)/50000000f));
-                            try {
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            endTime = System.nanoTime();
-                        }
-                        if(endTime - startTime >= 5000000000L) {
-                            getActivity().runOnUiThread(new Runnable() {
-                                public void run() {
-                                    stopRecording();
-                                    updateView(Status_mic.FINISH);
-                                }
-                            });
-                        }
-                    }
-                }).start();
-
-            } catch (IOException e) {
+                randomAccessFile = new RandomAccessFile(file,"rw");
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-        }
+            AudioProcessor recordProcessor = new WriterProcessor(AUDIO_FORMAT, randomAccessFile);
+            dispatcher.addAudioProcessor(recordProcessor);
 
+            PitchDetectionHandler pitchDetectionHandler = new PitchDetectionHandler() {
+                @Override
+                public void handlePitch(PitchDetectionResult res, AudioEvent e){
+                    float pitchInHz = res.getPitch();
+                    if(pitchInHz != -1 && pitchInHz < 400)
+                        pitches.add(pitchInHz);
+                }
+            };
+
+            AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.YIN, 44100, 2048, pitchDetectionHandler);
+            dispatcher.addAudioProcessor(pitchProcessor);
+
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    long startTime = System.nanoTime();
+                    long endTime = System.nanoTime();// start dispatcher
+                    Thread thread = new Thread(dispatcher, "Audio Dispatcher");
+                    thread.start();
+                    while (endTime - startTime < 5000000000L && status_mic_button == Status_mic.RECORDING) {
+                        progressBar.setProgress(Math.round((endTime - startTime) / 50000000f));
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        endTime = System.nanoTime();
+                    }
+                    if (endTime - startTime >= 5000000000L) {
+                        stopRecording();
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateView(Status_mic.FINISH);
+                            }
+                        });
+                    }
+                }
+            }).start();
+        }
     }
 
     /**
@@ -353,6 +371,8 @@ public class HomeFragment extends Fragment {
      */
     private void updateView(Status_mic newStatus) {
         setStatus_mic_button(newStatus);
+        if(newStatus == Status_mic.RECORDING)
+            getActivity().findViewById(R.id.nav_view).setActivated(false);
         updateView();
     }
 
@@ -392,6 +412,17 @@ public class HomeFragment extends Fragment {
             mNotificationManager.cancelAll();
         releaseDispatcher();
         manager.closeDB();
+    }
+
+    /**
+     * OnDetach method called after leaving the app in background task
+     */
+    @Override
+    public void onDetach()
+    {
+        super.onDetach();
+        if(getStatus_mic_button() == Status_mic.RECORDING)
+            stopRecording();
     }
 
     /**
@@ -458,8 +489,6 @@ public class HomeFragment extends Fragment {
      * @param newPath the path with the new name
      */
     public boolean renameFile(String oldPath, String newPath ) {
-        System.out.println( "oldPath = " + oldPath );
-        System.out.println( "newPath = " + newPath );
         File oldFile = new File( oldPath );
         File newFile = new File( newPath );
 
@@ -501,7 +530,6 @@ public class HomeFragment extends Fragment {
         boolean fileOK;
 
         File file = new File(finalPath);
-        System.out.println("finalPath = " + finalPath);
         try {
             if (!file.exists())
                 //noinspection ResultOfMethodCallIgnored we don't need the result because we try to create only if the file doesn't exist.
@@ -524,7 +552,7 @@ public class HomeFragment extends Fragment {
             inputStream.read(b);
             short[] s = new short[(b.length - 44) / 2];
             ByteBuffer.wrap(b)
-                    .order(ByteOrder.BIG_ENDIAN)
+                    .order(ByteOrder.LITTLE_ENDIAN)
                     .asShortBuffer()
                     .get(s);
 
@@ -532,17 +560,18 @@ public class HomeFragment extends Fragment {
                 audioData.addData(ss);
             }
 
+            audioData.setMaxAmplitudeAbs();
         }
         catch (IOException e) {
             e.printStackTrace();
         }
+
         audioData.processData();
+        FeaturesCalculator featuresCalculator = new FeaturesCalculator(audioData, pitches);
 
-        FeatureCalculator featureCalculator = new FeatureCalculator(audioData, pitches);
-
-        shimmer = featureCalculator.getShimmer() * 100;
-        jitter = featureCalculator.getJitter() * 100;
-        f0 = featureCalculator.getF0();
+        shimmer = featuresCalculator.getShimmer() * 100;
+        jitter = featuresCalculator.getJitter() * 100;
+        f0 = featuresCalculator.getfundamentalFreq();
     }
 
     /**

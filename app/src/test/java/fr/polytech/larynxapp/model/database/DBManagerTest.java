@@ -15,22 +15,34 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Testing DBManager class (Database Class mocked with Robolectric)
+ */
 @RunWith(RobolectricTestRunner.class)
 public class DBManagerTest {
 
     private DBManager dbManager;
 
+    /**
+     * TEST : Creation of the database
+     */
     @Before
     public void setup()
     {
         dbManager = new DBManager(ApplicationProvider.getApplicationContext());
     }
 
+    /**
+     * TEST : Closes the database
+     */
     @After
     public void closeDB() {
         dbManager.closeDB();
     }
 
+    /**
+     * TEST : Queries the different records added in the database
+     */
     @Test
     public void queryAllRecords()
     {
@@ -41,6 +53,9 @@ public class DBManagerTest {
         assertNotNull(dbManager.query());
     }
 
+    /**
+     * TEST : Adds a test record into the database
+     */
     @Test
     public void add()
     {
@@ -48,6 +63,9 @@ public class DBManagerTest {
         assertTrue(dbManager.add(record));
     }
 
+    /**
+     * TEST : Gets a specific test record from the database
+     */
     @Test
     public void getRecord()
     {
@@ -61,6 +79,9 @@ public class DBManagerTest {
         assertEquals(recordToTest.getF0(), record.getF0(), 0.001);
     }
 
+    /**
+     * TEST : Updates different values in the database concerning voice features
+     */
     @Test
     public void updateRecordVoiceFeatures()
     {
@@ -76,6 +97,9 @@ public class DBManagerTest {
         assertEquals(f0, recordUpdated.getF0(), 0.001);
     }
 
+    /**
+     * TEST : Deletes a record by a specific test name
+     */
     @Test
     public void deleteByName()
     {
@@ -84,6 +108,9 @@ public class DBManagerTest {
         assertTrue(dbManager.deleteByName(recordToDelete.getName()));
     }
 
+    /**
+     * TEST : Checks if the database is empty or not
+     */
     @Test
     public void isDatabaseEmpty()
     {

@@ -6,10 +6,17 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+/**
+ * Testing AudioData class
+ */
 public class AudioDataTest {
 
     private AudioData audioData;
 
+
+    /**
+     * Tests the addition of data
+     */
     @Test
     public void testAddData()
     {
@@ -22,6 +29,9 @@ public class AudioDataTest {
         assertEquals(0, (short) data.get(0));
     }
 
+    /**
+     * Tests the processing of data
+     */
     @Test
     public void testProcessData()
     {
@@ -29,13 +39,13 @@ public class AudioDataTest {
 
         assertNull(audioData.getData_processed());
 
-        for(short i = 0; i <= 10; i++)
+        for(short i = 0; i < 10; i++)
             audioData.addData(i);
         audioData.processData();
 
+        //Process Data removes the first 30% and the last 20%
         assertFalse(audioData.getData_processed().isEmpty());
-        assertEquals(audioData.getData().size(), audioData.getData_processed().size());
-        assertEquals(10, audioData.getMaxAmplitude());
-        assertEquals(0, audioData.getMinAmplitude());
+        assertEquals(0.8*audioData.getDataSize(), audioData.getMaxAmplitude(), 0.01);
+        assertEquals(0.3*audioData.getDataSize(), audioData.getMinAmplitude(), 0.01);
     }
 }

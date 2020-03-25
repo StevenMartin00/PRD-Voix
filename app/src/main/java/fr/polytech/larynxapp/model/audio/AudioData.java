@@ -27,6 +27,11 @@ public class AudioData {
 	private short       minAmplitude;
 	
 	/**
+	 * The highest absolute amplitude in this audio data.
+	 */
+	private short       maxAmplitudeAbs;
+	
+	/**
 	 * The row audio data list.
 	 */
 	private List<Short> data;
@@ -36,6 +41,21 @@ public class AudioData {
 	 */
 	private List<Short> data_processed;
 	
+	
+	/**
+	 * The ratio to remove from beginning of the row data in the processed data.
+	 */
+	private final static double RATIO_BEGINNING = 0.3;   //we remove the first 30%
+	
+	/**
+	 * The ratio to remove from ending of the row data in the processed data.
+	 */
+	private final static double RATIO_ENDING = 0.9;   //we remove the last  10%
+	
+	
+	
+	
+	
 	/**
 	 * AudioData sole and default builder.
 	 */
@@ -44,8 +64,13 @@ public class AudioData {
 		
 		maxAmplitude = Short.MIN_VALUE;
 		minAmplitude = Short.MAX_VALUE;
+		maxAmplitudeAbs = Short.MIN_VALUE;
 	}
-
+	
+	
+	
+	
+	
 	/**
 	 * Gets for the highest amplitude.
 	 *
@@ -62,6 +87,15 @@ public class AudioData {
 	 */
 	public short getMinAmplitude() {
 		return minAmplitude;
+	}
+	
+	/**
+	 * Gets for the highest absolute amplitude.
+	 *
+	 * @return the highest absolute amplitude
+	 */
+	public short getMaxAmplitudeAbs() {
+		return maxAmplitudeAbs;
 	}
 	
 	/**
@@ -118,8 +152,13 @@ public class AudioData {
 	public void processData() {
 		try {
 			data_processed = new ArrayList<>( data.size() );
-
-			for ( int i = 0; i < data.size(); i++ ) {
+			
+			int indexToCutFrom = (int) ( data.size() * RATIO_BEGINNING );
+			int indexToCutTo   = (int) ( data.size() * RATIO_ENDING );
+			
+			
+			// cut the head and tail of original audio data, only leave a small part of it
+			for ( int i = indexToCutFrom; i < indexToCutTo; i++ ) {
 				short newData = data.get( i );
 				
 				data_processed.add( newData );
@@ -133,6 +172,16 @@ public class AudioData {
 		}
 		catch ( Exception e ) {
 			Log.e( "---processData---", Log.getStackTraceString( e ), e );
+		}
+	}
+	
+	/**
+	 * Sets the highest absolute amplitude automatically.
+	 */
+	public void setMaxAmplitudeAbs() {
+		for (short element : data)
+			if ( maxAmplitudeAbs < Math.abs( element ) ) {
+				maxAmplitudeAbs = element;
 		}
 	}
 }

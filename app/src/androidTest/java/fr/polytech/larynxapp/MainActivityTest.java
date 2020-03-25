@@ -1,6 +1,5 @@
 package fr.polytech.larynxapp;
 
-
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -28,6 +27,9 @@ import static androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.hamcrest.Matchers.allOf;
 
+/**
+ * Espresso Test for the main activity
+ */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class MainActivityTest {

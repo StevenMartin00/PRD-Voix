@@ -7,19 +7,19 @@
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="fr.polytech.larynxapp.ui.home.HomeFragment"
+        android:name="fr.polytech.larynxapp.controller.home.HomeFragment"
         android:label="@string/title_home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_history"
-        android:name="fr.polytech.larynxapp.ui.history.HistoryFragment"
+        android:name="fr.polytech.larynxapp.controller.history.HistoryFragment"
         android:label="@string/title_history"
         tools:layout="@layout/fragment_history" />
 
     <fragment
         android:id="@+id/navigation_evolution"
-        android:name="fr.polytech.larynxapp.ui.evolution.EvolutionFragment"
+        android:name="fr.polytech.larynxapp.controller.evolution.EvolutionFragment"
         android:label="@string/title_evolution"
         tools:layout="@layout/fragment_evolution" />
 </navigation>

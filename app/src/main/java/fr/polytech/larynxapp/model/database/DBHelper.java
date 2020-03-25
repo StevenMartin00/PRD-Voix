@@ -5,10 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 
-/*
-  Created by XU Jiaoqiang on 2018/3/20.
- */
-
 /**
  * Class extending SQLiteOpenHelper for easier database generation and recovery.
  */
@@ -27,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	/**
 	 * Constant representing the table's name containing the records.
 	 */
-    public static final String TABLE_NAME = "Voices";
+    public static final String  TABLE_NAME = "Voices";
 
     /**
      * DBHelper sole builder.

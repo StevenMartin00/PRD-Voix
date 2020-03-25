@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Larynx app</string>
+    <string name="app_name">LarynxApp</string>
     <string name="title_home">Accueil</string>
     <string name="title_history">Historique</string>
     <string name="title_evolution">Suivi</string>
@@ -8,6 +8,7 @@
     <string name="textview">TextView</string>
     <string name="startDateText">De</string>
     <string name="endDateText">Jusqu\'à</string>
+    <string name="dateLabelText">Filtrer par date :</string>
     <string name="text_analysing_and_recording_data">Enregistrement et analyse de votre voix en cours</string>
     <string name="text_pls_wait">Merci de bien vouloir patienter…</string>
 </resources>

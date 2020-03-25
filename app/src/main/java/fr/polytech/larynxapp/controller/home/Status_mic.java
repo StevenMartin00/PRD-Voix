@@ -1,4 +1,4 @@
-package fr.polytech.larynxapp.ui.home;
+package fr.polytech.larynxapp.controller.home;
 
 /**
  * Status of the mic button

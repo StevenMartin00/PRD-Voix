@@ -1,4 +1,4 @@
-package fr.polytech.larynxapp.ui.history;
+package fr.polytech.larynxapp.controller.history;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
@@ -74,7 +74,6 @@ public class HistoryFragment extends Fragment {
                 android.R.layout.simple_list_item_1, records);
         listview.setAdapter(adapter);
 
-
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {                     //Sets the action on a line click
             @SuppressLint("ResourceAsColor")
             @Override
@@ -84,10 +83,8 @@ public class HistoryFragment extends Fragment {
                 setLineData(tmpLineDataSet);
                 dataSets.add(tmpLineDataSet);
                 final LineData data = new LineData(dataSets);
+                mpLineChart.getAxisLeft().setAxisMaximum(10);
                 mpLineChart.setData(data);
-                YAxis yAxis = mpLineChart.getAxisLeft();
-                yAxis.setAxisMinimum(0);
-                yAxis.setAxisMaximum(5);
                 mpLineChart.invalidate();
             }
         });

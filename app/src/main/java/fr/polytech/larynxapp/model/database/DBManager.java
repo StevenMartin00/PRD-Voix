@@ -9,13 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.polytech.larynxapp.model.Record;
-import fr.polytech.larynxapp.model.database.DBHelper;
 
 import static fr.polytech.larynxapp.model.database.DBHelper.TABLE_NAME;
-
-/*
-  Created by XU Jiaoqiang on 2018/3/20.
- */
 
 /**
  * Class used to manage the database
@@ -41,8 +36,6 @@ public class DBManager {
 		helper = new DBHelper( context );
 		db = helper.getWritableDatabase();
 		helper.onCreate( db );
-		
-		//checkDataBase();
 	}
 	
 	/**
@@ -159,9 +152,9 @@ public class DBManager {
 	/**
 	 * Updates Voice Features of a specific record
 	 * @param name record's name
-	 * @param jitter
-	 * @param shimmer
-	 * @param f0
+	 * @param jitter jitter value
+	 * @param shimmer shimmer value
+	 * @param f0 fundamental frequency value
 	 * @return true if record is updated with voice features else return false
 	 */
 	public boolean updateRecordVoiceFeatures(String name, double jitter, double shimmer, double f0)

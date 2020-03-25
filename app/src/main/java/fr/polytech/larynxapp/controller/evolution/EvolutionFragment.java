@@ -1,4 +1,4 @@
-package fr.polytech.larynxapp.ui.evolution;
+package fr.polytech.larynxapp.controller.evolution;
 
 import android.app.DatePickerDialog;
 import android.graphics.Color;
@@ -13,24 +13,22 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import fr.polytech.larynxapp.MainActivity;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
 import fr.polytech.larynxapp.model.database.DBManager;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class EvolutionFragment extends Fragment {
@@ -100,9 +98,9 @@ public class EvolutionFragment extends Fragment {
 
 
         shimmerMpLineChart = root.findViewById(R.id.shimmer_line_chart);
-        setChart(shimmerMpLineChart);
+        setShimmerChart(shimmerMpLineChart);
 
-        LineDataSet shimmerLineSet = new LineDataSet(shimmerDataValues1(), "Shimmer");
+        LineDataSet shimmerLineSet = new LineDataSet(shimmerDataValues(), "Shimmer");
         shimmerLineSet.setColor(Color.BLACK);
         shimmerLineSet.setLineWidth(2f);
         shimmerLineSet.setCircleColor(Color.BLACK);
@@ -112,9 +110,14 @@ public class EvolutionFragment extends Fragment {
         ArrayList<ILineDataSet> shimmerDataSets = new ArrayList<>();
         shimmerDataSets.add((shimmerLineSet));
 
+        LimitLine shimmerLl = new LimitLine(2.5f);
+        shimmerLl.setLabel("Limite shimmer");
+        shimmerLl.setLineColor(Color.RED);
+        shimmerMpLineChart.getAxisLeft().addLimitLine(shimmerLl);
 
         LineData shimmerData = new LineData(shimmerDataSets);
         shimmerMpLineChart.setData(shimmerData);
+        //setXAxisFormat(shimmerMpLineChart);
         shimmerMpLineChart.invalidate();
         shimmerMpLineChart.setDrawGridBackground(false);
 
@@ -126,7 +129,7 @@ public class EvolutionFragment extends Fragment {
         jitterTextView.setTextSize(20f);
 
         jitterMpLineChart = root.findViewById(R.id.jitter_line_chart);
-        setChart(jitterMpLineChart);
+        setJitterChart(jitterMpLineChart);
 
         LineDataSet jitterLineSet = new LineDataSet(jitterDataValues(), "Jitter");
         jitterLineSet.setColor(Color.BLACK);
@@ -138,8 +141,14 @@ public class EvolutionFragment extends Fragment {
         ArrayList<ILineDataSet> jitterDataSets = new ArrayList<>();
         jitterDataSets.add((jitterLineSet));
 
+        LimitLine jitterLl = new LimitLine(1.04f);
+        jitterLl.setLabel("Limite jitter");
+        jitterLl.setLineColor(Color.RED);
+        jitterMpLineChart.getAxisLeft().addLimitLine(jitterLl);
+
         LineData jitterData = new LineData(jitterDataSets);
         jitterMpLineChart.setData(jitterData);
+        //setXAxisFormat(jitterMpLineChart);
         jitterMpLineChart.invalidate();
         jitterMpLineChart.setDrawGridBackground(false);
 
@@ -151,7 +160,7 @@ public class EvolutionFragment extends Fragment {
      * Initialisation of the shimmer data's arraylist, should be completed and link to the data base
      * @return the shimmer data's arraylist
      */
-    private ArrayList<Entry> shimmerDataValues1(){
+    private ArrayList<Entry> shimmerDataValues(){
         ArrayList<Entry> dataVals = new ArrayList<>();
         for(int i = 0; i < records.size(); i++) {
             dataVals.add(new Entry(i+1, (float) records.get(i).getShimmer()));
@@ -172,10 +181,40 @@ public class EvolutionFragment extends Fragment {
     }
 
     /**
-     * Set the graphique feature of the line charts
+     * Set the graphic feature of the line charts for the shimmer
      * @param chart the chart to be set
      */
-    private void setChart(LineChart chart){
+    private void setShimmerChart(LineChart chart){
+
+        YAxis yAxis = chart.getAxisLeft();                  //The line chart's y axis
+        XAxis xAxis = chart.getXAxis();                     //The line chart's x axis
+
+        chart.getAxisRight().setEnabled(false);             //Disable the right axis
+
+        //Set the y axis property
+        yAxis.setAxisLineWidth(2f);
+        yAxis.setAxisLineColor(Color.BLACK);
+        yAxis.setAxisMinimum(0f);
+        yAxis.setAxisMaximum(10f);
+        yAxis.setTextSize(12f);
+
+        //Set the x axis property
+        xAxis.setAxisLineWidth(2f);
+        xAxis.setAxisLineColor(Color.BLACK);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextSize(12f);
+
+        chart.getLegend().setEnabled(false);
+        chart.getDescription().setEnabled(false);
+        chart.setScaleEnabled(true);
+        chart.setTouchEnabled(false);
+    }
+
+    /**
+     * Set the graphic feature of the line charts for the jitter
+     * @param chart the chart to be set
+     */
+    private void setJitterChart(LineChart chart){
 
         YAxis yAxis = chart.getAxisLeft();                  //The line chart's y axis
         XAxis xAxis = chart.getXAxis();                     //The line chart's x axis
@@ -197,6 +236,23 @@ public class EvolutionFragment extends Fragment {
 
         chart.getLegend().setEnabled(false);
         chart.getDescription().setEnabled(false);
+
+        chart.setScaleEnabled(true);
+        chart.setTouchEnabled(false);
+    }
+
+    private void setXAxisFormat(LineChart chart)
+    {
+        List<String> dates = new ArrayList<>();
+        for(int i = 0; i < records.size(); i++)
+        {
+            String[] datesWithoutTime = records.get(i).getName().split("-");
+            dates.add(datesWithoutTime[0] + "-" + datesWithoutTime[1] + "-" + datesWithoutTime[2]);
+        }
+
+        IndexAxisValueFormatter formatter = new IndexAxisValueFormatter(dates);
+        chart.getXAxis().setGranularity(1f);
+        chart.getXAxis().setValueFormatter(formatter);
     }
 
     private void initDateButton() {
