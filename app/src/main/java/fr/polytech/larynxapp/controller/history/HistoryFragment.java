@@ -140,7 +140,7 @@ public class HistoryFragment extends Fragment {
         yAxis.setAxisLineWidth(2.5f);
         yAxis.setAxisLineColor(Color.BLACK);
         yAxis.setAxisMinimum(0f);
-        yAxis.setAxisMaximum(1.5f);
+        yAxis.setAxisMaximum(10f);
         yAxis.setTextSize(12f);
 
         //Set the x axis property
@@ -148,7 +148,7 @@ public class HistoryFragment extends Fragment {
         xAxis.setAxisLineColor(Color.BLACK);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setAxisMinimum(0f);
-        xAxis.setAxisMaximum(1.5f);
+        xAxis.setAxisMaximum(3f);
         xAxis.setTextSize(12f);
 
         chart.getLegend().setEnabled(false);

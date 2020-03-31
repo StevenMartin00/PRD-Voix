@@ -51,7 +51,7 @@ public class FeaturesCalculatorTest
         featureCalculator = new FeaturesCalculator(audioData, pitches);
     }
 
-    /*@Test
+    @Test
     public void getF0()
     {
         assertFalse(pitches.isEmpty());
@@ -68,5 +68,5 @@ public class FeaturesCalculatorTest
     public void getJitter()
     {
         assertEquals(0d, featureCalculator.getJitter(), 0.01);
-    }*/
+    }
 }

@@ -6,9 +6,9 @@
     <string name="button_mic">micro</string>
     <string name="font_mic">font of the mic</string>
     <string name="textview">TextView</string>
-    <string name="startDateText">De</string>
-    <string name="endDateText">Jusqu\'à</string>
-    <string name="dateLabelText">Filtrer par date :</string>
+    <string name="startDateText">Début</string>
+    <string name="endDateText">Fin</string>
+    <string name="dateLabelText">Sélectionner une période</string>
     <string name="text_analysing_and_recording_data">Enregistrement et analyse de votre voix en cours</string>
     <string name="text_pls_wait">Merci de bien vouloir patienter…</string>
 </resources>

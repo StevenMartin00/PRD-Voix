@@ -146,7 +146,6 @@ public class MainActivityTest {
         appCompatImageView6.perform(click());
 
         try {
-            //TODO: NEVER PASSED
             onView(withId(R.id.reset_button)).check(matches(isDisplayed()));
             // Reset button is displayed
             onView(withId(R.id.reset_button)).perform(click());

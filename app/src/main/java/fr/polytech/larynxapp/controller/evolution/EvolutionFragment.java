@@ -18,12 +18,14 @@ import fr.polytech.larynxapp.model.Record;
 import fr.polytech.larynxapp.model.database.DBManager;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
@@ -110,18 +112,21 @@ public class EvolutionFragment extends Fragment {
         ArrayList<ILineDataSet> shimmerDataSets = new ArrayList<>();
         shimmerDataSets.add((shimmerLineSet));
 
-        LimitLine shimmerLl = new LimitLine(2.5f);
+        LimitLine shimmerLl = new LimitLine(3.8f);
         shimmerLl.setLabel("Limite shimmer");
         shimmerLl.setLineColor(Color.RED);
         shimmerMpLineChart.getAxisLeft().addLimitLine(shimmerLl);
 
+        XAxis shimmerXAxis = shimmerMpLineChart.getXAxis();
+        shimmerXAxis.setGranularity(1f);
+        shimmerXAxis.setSpaceMax(0.1f);
+        shimmerXAxis.setSpaceMin(0.1f);
+        shimmerXAxis.setValueFormatter(new com.github.mikephil.charting.formatter.IndexAxisValueFormatter(dateValues()));
+
         LineData shimmerData = new LineData(shimmerDataSets);
         shimmerMpLineChart.setData(shimmerData);
-        //setXAxisFormat(shimmerMpLineChart);
         shimmerMpLineChart.invalidate();
         shimmerMpLineChart.setDrawGridBackground(false);
-
-
 
         //******************************Creation of the jitter's chart******************************/
         final TextView jitterTextView = root.findViewById(R.id.jitter_text_view);
@@ -146,9 +151,14 @@ public class EvolutionFragment extends Fragment {
         jitterLl.setLineColor(Color.RED);
         jitterMpLineChart.getAxisLeft().addLimitLine(jitterLl);
 
+        XAxis jitterXAxis = jitterMpLineChart.getXAxis();
+        jitterXAxis.setGranularity(1f);
+        jitterXAxis.setSpaceMax(0.1f);
+        jitterXAxis.setSpaceMin(0.1f);
+        jitterXAxis.setValueFormatter(new com.github.mikephil.charting.formatter.IndexAxisValueFormatter(dateValues()));
+
         LineData jitterData = new LineData(jitterDataSets);
         jitterMpLineChart.setData(jitterData);
-        //setXAxisFormat(jitterMpLineChart);
         jitterMpLineChart.invalidate();
         jitterMpLineChart.setDrawGridBackground(false);
 
@@ -157,27 +167,42 @@ public class EvolutionFragment extends Fragment {
     }
 
     /**
-     * Initialisation of the shimmer data's arraylist, should be completed and link to the data base
+     * Initialisation of the shimmer data's arraylist
      * @return the shimmer data's arraylist
      */
     private ArrayList<Entry> shimmerDataValues(){
         ArrayList<Entry> dataVals = new ArrayList<>();
         for(int i = 0; i < records.size(); i++) {
-            dataVals.add(new Entry(i+1, (float) records.get(i).getShimmer()));
+            dataVals.add(new Entry(i, (float) records.get(i).getShimmer()));
         }
         return dataVals;
     }
 
     /**
-     * Initialisation of the jitter data's arraylist, should be completed and link to the data base
-     * @return the jiiter data's arraylist
+     * Initialisation of the jitter data's arraylist
+     * @return the jitter data's arraylist
      */
     private ArrayList<Entry> jitterDataValues(){
         ArrayList<Entry> dataVals = new ArrayList<>();
         for(int i = 0; i < records.size(); i++) {
-            dataVals.add(new Entry(i+1, (float) records.get(i).getJitter()));
+            dataVals.add(new Entry(i, (float) records.get(i).getJitter()));
         }
         return dataVals;
+    }
+
+    /**
+     * Initialisation of the dates arraylist
+     * @return the dates arraylist
+     */
+    private String[] dateValues(){
+        ArrayList<String> dates = new ArrayList<>();
+        for(int i = 0; i < records.size(); i++)
+        {
+            String strippedName = records.get(i).getName().replace("-", " ");
+            String[] dateTimes = strippedName.split(" ");
+            dates.add(i ,dateTimes[0] + "-" + dateTimes[1] + "-" + dateTimes[2]);
+        }
+        return dates.toArray(new String[0]);
     }
 
     /**
@@ -239,20 +264,6 @@ public class EvolutionFragment extends Fragment {
 
         chart.setScaleEnabled(true);
         chart.setTouchEnabled(false);
-    }
-
-    private void setXAxisFormat(LineChart chart)
-    {
-        List<String> dates = new ArrayList<>();
-        for(int i = 0; i < records.size(); i++)
-        {
-            String[] datesWithoutTime = records.get(i).getName().split("-");
-            dates.add(datesWithoutTime[0] + "-" + datesWithoutTime[1] + "-" + datesWithoutTime[2]);
-        }
-
-        IndexAxisValueFormatter formatter = new IndexAxisValueFormatter(dates);
-        chart.getXAxis().setGranularity(1f);
-        chart.getXAxis().setValueFormatter(formatter);
     }
 
     private void initDateButton() {

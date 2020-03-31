@@ -46,11 +46,12 @@ import be.tarsos.dsp.io.TarsosDSPAudioFormat;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
-import be.tarsos.dsp.pitch.PitchProcessor;
 import be.tarsos.dsp.writer.WriterProcessor;
 import fr.polytech.larynxapp.R;
 import fr.polytech.larynxapp.model.Record;
 import fr.polytech.larynxapp.model.analysis.FeaturesCalculator;
+import fr.polytech.larynxapp.model.analysis.PitchProcessor;
+import fr.polytech.larynxapp.model.analysis.Yin;
 import fr.polytech.larynxapp.model.audio.AudioData;
 import fr.polytech.larynxapp.model.database.DBManager;
 
@@ -77,7 +78,7 @@ public class HomeFragment extends Fragment {
     private ImageView icon_mic;
 
     /**
-     *  Show the advancment of the recording
+     *  Show the advancement of the recording
      */
     private ProgressBar progressBar;
 
@@ -288,7 +289,6 @@ public class HomeFragment extends Fragment {
                 folder.mkdirs();
             }
             pitches = new ArrayList<>();
-            releaseDispatcher();
             dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(44100, 2048, 0);
 
             File file = new File(FILE_PATH + File.separator + FILE_NAME);
@@ -310,7 +310,7 @@ public class HomeFragment extends Fragment {
                 }
             };
 
-            AudioProcessor pitchProcessor = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.YIN, 44100, 2048, pitchDetectionHandler);
+            AudioProcessor pitchProcessor = new PitchProcessor(new Yin(44100, 2048), 44100, 2048, pitchDetectionHandler);
             dispatcher.addAudioProcessor(pitchProcessor);
 
 
@@ -331,10 +331,10 @@ public class HomeFragment extends Fragment {
                         endTime = System.nanoTime();
                     }
                     if (endTime - startTime >= 5000000000L) {
-                        stopRecording();
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                stopRecording();
                                 updateView(Status_mic.FINISH);
                             }
                         });
