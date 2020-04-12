@@ -23,5 +23,5 @@ jobs:
       with:
         api-level: 29
         script: ./gradlew connectedCheck
-    - name: Run code coverage (reports available in app/build/reports/coverage)
-      run: ./gradlew createDebugAndroidTestCoverageReport
+    #- name: Run code coverage (reports available in app/build/reports/coverage)
+    #  run: ./gradlew createDebugAndroidTestCoverageReport
