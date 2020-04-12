@@ -146,7 +146,7 @@ public class EvolutionFragment extends Fragment {
         ArrayList<ILineDataSet> jitterDataSets = new ArrayList<>();
         jitterDataSets.add((jitterLineSet));
 
-        LimitLine jitterLl = new LimitLine(1.04f);
+        LimitLine jitterLl = new LimitLine(2.04f);
         jitterLl.setLabel("Limite jitter");
         jitterLl.setLineColor(Color.RED);
         jitterMpLineChart.getAxisLeft().addLimitLine(jitterLl);
@@ -250,7 +250,7 @@ public class EvolutionFragment extends Fragment {
         yAxis.setAxisLineWidth(2f);
         yAxis.setAxisLineColor(Color.BLACK);
         yAxis.setAxisMinimum(0f);
-        yAxis.setAxisMaximum(3f);
+        yAxis.setAxisMaximum(6f);
         yAxis.setTextSize(12f);
 
         //Set the x axis property

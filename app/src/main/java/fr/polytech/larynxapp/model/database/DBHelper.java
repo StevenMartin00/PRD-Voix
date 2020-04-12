@@ -23,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	/**
 	 * Constant representing the table's name containing the records.
 	 */
-    public static final String  TABLE_NAME = "Voices";
+    static final String  TABLE_NAME = "Records";
 
     /**
      * DBHelper sole builder.
@@ -37,9 +37,9 @@ public class DBHelper extends SQLiteOpenHelper {
     /**
      * Override the method for initializing the dataBase
 	 *
-	 * i.e. : creates the table containing the records if it doesn't already exists.
+	 * i.e. : creates the table containing the records if it doesn't already exist.
 	 *
-     * @param db the database where to create the table
+     * @param db the database where the table needs to be created
      */
     @Override
     public void onCreate(SQLiteDatabase db) {

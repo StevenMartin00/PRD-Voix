@@ -186,20 +186,6 @@ public class HomeFragment extends Fragment {
                 1,
                 true,
                 ByteOrder.LITTLE_ENDIAN.equals(ByteOrder.nativeOrder()));
-        manager.resetDB();
-        Record record = new Record();
-        record.setF0(104d);
-        record.setJitter(0.9);
-        record.setShimmer(1.2);
-        record.setName("12-03-2020 15-42-25");
-        manager.add(record);
-
-        Record record2 = new Record();
-        record2.setF0(102d);
-        record2.setJitter(0.7);
-        record2.setShimmer(1.4);
-        record2.setName("18-03-2020 15-42-25");
-        manager.add(record2);
 
         updateView();
         return root;
@@ -213,12 +199,6 @@ public class HomeFragment extends Fragment {
             case DEFAULT:
                 progressBar.setVisibility(View.INVISIBLE);
                 icon_mic.setBackgroundResource(R.drawable.ic_mic);
-                if(!manager.isDatabaseEmpty())
-                {
-                    List<Record> records = manager.query();
-                    for (Record record : records)
-                        System.out.println(record.getName() + " jit: " + record.getJitter() + " shim: " + record.getShimmer() + " f0: " + record.getF0());
-                }
                 button_mic.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         updateView(Status_mic.RECORDING);

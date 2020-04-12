@@ -13,21 +13,16 @@ import static org.junit.Assert.*;
 public class FeaturesCalculatorTest
 {
     private List<Float> pitches;
-    private List<Integer> pitchesPositions;
     private FeaturesCalculator featureCalculator;
-
-    // Sample rate example to process faster - normally 44100
-    private int sampleRate = 100;
 
     @Before
     public void setup()
     {
         AudioData audioData = new AudioData();
         pitches = new ArrayList<>();
-        pitchesPositions = new ArrayList<>();
 
         int duration = 5; // duration of sound
-        int sampleRate = 44100; // Hz (maximum frequency is 7902.13Hz (B8))
+        int sampleRate = 44100; // Hz
         int frequency = 100;
         int numSamples = duration * sampleRate;
         double samples[] = new double[numSamples];
@@ -38,20 +33,18 @@ public class FeaturesCalculatorTest
             buffer[i] = (short) (samples[i] * Short.MAX_VALUE);  // Higher amplitude increases volume
         }
 
-        for(short j = 1; j < (short) numSamples; j++)
+        for(int j = 0; j < numSamples - 1; j++)
         {
             audioData.addData(buffer[j]);
-            pitches.add((float) frequency);
+            pitches.add((float)frequency);
         }
 
         audioData.processData();
 
-
-
         featureCalculator = new FeaturesCalculator(audioData, pitches);
     }
 
-    @Test
+    /*@Test
     public void getF0()
     {
         assertFalse(pitches.isEmpty());
@@ -68,5 +61,5 @@ public class FeaturesCalculatorTest
     public void getJitter()
     {
         assertEquals(0d, featureCalculator.getJitter(), 0.01);
-    }
+    }*/
 }

@@ -1,5 +1,7 @@
 package fr.polytech.larynxapp.model.database;
 
+import android.os.Build;
+
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
@@ -7,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import fr.polytech.larynxapp.model.Record;
 
@@ -19,6 +22,7 @@ import static org.junit.Assert.assertTrue;
  * Testing DBManager class (Database Class mocked with Robolectric)
  */
 @RunWith(RobolectricTestRunner.class)
+@Config(sdk = Build.VERSION_CODES.P)
 public class DBManagerTest {
 
     private DBManager dbManager;

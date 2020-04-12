@@ -16,10 +16,12 @@ jobs:
         java-version: 1.8
     - name: Build with Gradle
       run: chmod +x gradlew && ./gradlew build
-    - name: Runs tests
+    - name: Run tests
       run: ./gradlew test -PdisablePreDex --stacktrace
-    - name: Runs tests on Android emulator
+    - name: Run tests on Android emulator
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 29
         script: ./gradlew connectedCheck
+    - name: Run code coverage (reports available in app/build/reports/coverage)
+      run: ./gradlew createDebugAndroidTestCoverageReport

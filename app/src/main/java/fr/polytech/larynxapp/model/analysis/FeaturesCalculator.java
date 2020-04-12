@@ -121,7 +121,7 @@ public class FeaturesCalculator {
 	// FEATURE NUMBER 1 : SHIMMER
 
 	/**
-	 * The method calculating the Shimmer
+	 * The method calculating the Shimmer (corresponds to dda in Praat)
 	 *
 	 * @return the Shimmer
 	 */
@@ -156,13 +156,13 @@ public class FeaturesCalculator {
 			amplitudeSum += ampPk2Pk.get( ampPk2Pk.size() - 1 );
 		}
 		// calculate shimmer (relative)
-		return ( (double) amplitudeDiffSum / (double) ( ampPk2Pk.size() - 1 ) ) / ( (double) amplitudeSum / (double) ampPk2Pk.size() );
+		return ( (double) amplitudeDiffSum / periods.size() - 1 ) / ( (double) amplitudeSum / periods.size() );
 	}
 
 	// FEATURE NUMBER 2 : JITTER
 
 	/**
-	 * The method calculating the Jitter
+	 * The method calculating the Jitter (corresponds to ddp in Praat)
 	 *
 	 * @return the Jitter
 	 */

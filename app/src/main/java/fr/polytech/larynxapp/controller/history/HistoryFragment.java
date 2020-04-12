@@ -46,11 +46,6 @@ public class HistoryFragment extends Fragment {
      */
     private List<Record> records;
 
-    /**
-     * The map where the data will be associated with the dates
-     */
-    private HashMap<String, float[]> listMap = new HashMap<>();
-
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -83,7 +78,6 @@ public class HistoryFragment extends Fragment {
                 setLineData(tmpLineDataSet);
                 dataSets.add(tmpLineDataSet);
                 final LineData data = new LineData(dataSets);
-                mpLineChart.getAxisLeft().setAxisMaximum(10);
                 mpLineChart.setData(data);
                 mpLineChart.invalidate();
             }
@@ -119,7 +113,7 @@ public class HistoryFragment extends Fragment {
     }
 
     /**
-     *  Initialisation of the data's map, should be completed and link to the data base
+     *  Initialisation of the data's map
      */
     private void initMap(){
         records = new DBManager(getContext()).query();

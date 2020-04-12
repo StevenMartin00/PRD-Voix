@@ -109,7 +109,7 @@ public class DBManager {
 
 
 	/**
-	 * Get all the voices in the dataBase
+	 * Get all the records in the dataBase
 	 *
 	 * @return the list of all the Records
 	 */
@@ -137,7 +137,7 @@ public class DBManager {
 	 */
 	public Record getRecord(String name)
 	{
-		Cursor cursor = db.rawQuery("SELECT * FROM Voices WHERE Name like ?", new String[]{name});
+		Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE Name like ?", new String[]{name});
 		cursor.moveToNext();
 		Record record = new Record();
 		record.setName(cursor.getString(cursor.getColumnIndex("Name")));
@@ -163,7 +163,7 @@ public class DBManager {
 		boolean isUpdated;
 		try
 		{
-			db.execSQL("UPDATE Voices SET Jitter = " + jitter + ", Shimmer = " + shimmer + ", F0 = " + f0 + " WHERE Name like '" + name + "'");
+			db.execSQL("UPDATE " + TABLE_NAME + " SET Jitter = " + jitter + ", Shimmer = " + shimmer + ", F0 = " + f0 + " WHERE Name like '" + name + "'");
 			db.setTransactionSuccessful();
 			isUpdated = true;
 		}
@@ -184,7 +184,7 @@ public class DBManager {
 	 * @return the Cursor
 	 */
 	private Cursor queryTheCursor() {
-		return db.rawQuery( "SELECT * FROM Voices", null );
+		return db.rawQuery( "SELECT * FROM " + TABLE_NAME, null );
 	}
 
 	/**
