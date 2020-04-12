@@ -4,7 +4,7 @@ import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 
 /**
- * Overriding class from TarsosDSP to change threshold
+ * Adapting Yin algorithm for TarsosDSP, override to change threshold
  */
 public final class Yin implements PitchDetector {
     /**
@@ -133,10 +133,7 @@ public final class Yin implements PitchDetector {
 
     /**
      * The cumulative mean normalized difference function as described in step 3
-     * of the YIN paper. <br>
-     * <code>
-     * yinBuffer[0] == yinBuffer[1] = 1
-     * </code>
+     * of the YIN paper.
      */
     private void cumulativeMeanNormalizedDifference() {
         int tau;
@@ -149,11 +146,9 @@ public final class Yin implements PitchDetector {
     }
 
     /**
-     * Implements step 4 of the AUBIO_YIN paper.
+     * Implements step 4 of the AUDIO_YIN paper.
      */
     private int absoluteThreshold() {
-        // Uses another loop construct
-        // than the AUBIO implementation
         int tau;
         // first two positions in yinBuffer are always 1
         // So start at the third (index 2)
@@ -190,14 +185,11 @@ public final class Yin implements PitchDetector {
     }
 
     /**
-     * Implements step 5 of the AUBIO_YIN paper. It refines the estimated tau
+     * Implements step 5 of the AUDIO_YIN paper. It refines the estimated tau
      * value using parabolic interpolation. This is needed to detect higher
-     * frequencies more precisely. See http://fizyka.umk.pl/nrbook/c10-2.pdf and
-     * for more background
-     * http://fedc.wiwi.hu-berlin.de/xplore/tutorials/xegbohtmlnode62.html
+     * frequencies more precisely.
      *
-     * @param tauEstimate
-     *            The estimated tau value.
+     * @param tauEstimate The estimated tau value.
      * @return A better, more precise tau value.
      */
     private float parabolicInterpolation(final int tauEstimate) {
@@ -234,8 +226,6 @@ public final class Yin implements PitchDetector {
             s0 = yinBuffer[x0];
             s1 = yinBuffer[tauEstimate];
             s2 = yinBuffer[x2];
-            // fixed AUBIO implementation, thanks to Karl Helgason:
-            // (2.0f * s1 - s2 - s0) was incorrectly multiplied with -1
             betterTau = tauEstimate + (s2 - s0) / (2 * (2 * s1 - s2 - s0));
         }
         return betterTau;
